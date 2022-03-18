@@ -20,14 +20,14 @@ void shell_initialize(){
     clear();
     
     // user greetings : 
-    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     printf("Welcome to Lior & Shaked Shell \n" );
     printf("Use with cautious! \n" );
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
     // user handle :
     char* username = getenv("USER");
-    printf("\n\n\n USER:@ %s", username);
+    printf("\n\n\nUSER:@%s", username);
     printf("\n");
     sleep(1);
     clear();
@@ -39,38 +39,29 @@ void shell_initialize(){
  * 
  * @param input user input.
  */
-int user_input(char *input){
+void user_input(char *input){
 
-        char* read = NULL;
-        
         // Exit shell case:
-        if(strcmp(input,"EXIT") == 0){
-            printf("Exiting shell, good bye ... ");
+        if(strcmp(input,"EXIT\n") == 0){
+            printf("Exiting shell, good bye ...");
             sleep(1);
             exit(1);
         }
         // get directory case:
-        if(strcmp(input,"pwd") == 0){
+        if(strcmp(input,"pwd\n") == 0){
             get_curr_directory();
+            return;
         }
 
         // handle echo msg case:
         // this line checks if a string starts with 'ECHO'
-        read = strstr(input,"ECHO");
-        if(strcmp(input,read) == 0){
+        char echo[5];
+        strncpy(echo,&input[0],4);
+        echo[4] = '\0';
+        if(strcmp(echo,"ECHO") == 0){
             print_echo_msg(input);
+            return;
         }
-
-        // handle input.
-        read = readline("\n ~");
-        if(strlen(read) != 0) {
-            add_history(read);
-            strcpy(input,read);
-            return 0;
-        }else{
-            return 1;
-        }
-
 }
 
 /**
@@ -80,36 +71,39 @@ int user_input(char *input){
  */
 void get_curr_directory(){
 
-    char curr_dir[2048];
-    getcwd(curr_dir,sizeof(curr_dir));
-    printf("\n %s",curr_dir);
-
+    long size;
+    char *buf;
+    char *curr_dir;
+    size = pathconf(".",_PC_PATH_MAX);
+    if((buf = (char*)malloc((size_t)size))!=NULL){
+        curr_dir = getcwd(buf,(size_t)size);
+    }
+    printf("%s\n",curr_dir);
 }
 
 /**
  * @brief This method prints an echo message.
  * 
  */
-void print_echo_msg(char *echo){
+void print_echo_msg(char *return_echo){
 
     /** 
      * i forwad the pointer by 4.
      * this is because i have no need to see the 'ECHO' in reply.
      */
-
-    echo+=4;
-    printf("%s\n",*echo);
+    return_echo+=5;
+    printf("%s",return_echo);
 }
 
 int main(){
     char *inputString ;
     inputString = (char*) malloc(100*sizeof(char));
     shell_initialize();
-
+    
     while(1){
-
-        if(user_input(inputString)){
-            continue;
-        }
+        //using fgets so it will include spaces, etc..
+        // to put in mind.> dont forget the use of \n when checking for inputs!.
+        fgets(inputString,100,stdin);
+        user_input(inputString);
     }
 }

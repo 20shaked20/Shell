@@ -3,7 +3,7 @@
 #define SHELL_SHELL_H
 
 void shell_initialize();
-int user_input(char *input);
+void user_input(char *input);
 void get_curr_directory();
 void print_echo_msg(char *echo);
 
