@@ -1,21 +1,33 @@
+/**
+ * @file Shell.c
+ * @author Shaked Levi, Lior Nagar
+ * @brief This program is a Shell project, it will have some basic options like the shell does.
+ * includes -> pwd,ls,cd ..., for further details ,enter the "Help" keyword in the program.
+ * @version 0.1
+ * @date 2022-03-21
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include<sys/types.h>
-#include<sys/wait.h>
-#include<readline/readline.h>
-#include<readline/history.h>
+
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+
 
 #include "Shell.h"
 
 // method to clear the shell.
 #define clear() printf("\033[H\033[J]")
 
-/**
- * @brief This method is responsible for initliazing the shell at startup.
- * 
- */
+
 void shell_initialize(){
     clear();
     
@@ -34,11 +46,7 @@ void shell_initialize(){
 
 }
 
-/**
- * @brief This method handles the user input we get, will be modified on the fly.
- * 
- * @param input user input.
- */
+
 void user_input(char *input){
 
         // Exit shell case:
@@ -52,6 +60,12 @@ void user_input(char *input){
             get_curr_directory();
             return;
         }
+        
+        // open a tcp localhost, we are client.
+        if(strcmp(input,"TCP PORT\n") == 0){
+            open_tcp_socket();
+            return;
+        }
 
         // handle echo msg case:
         // this line checks if a string starts with 'ECHO'
@@ -62,13 +76,46 @@ void user_input(char *input){
             print_echo_msg(input);
             return;
         }
+        
+}
+void open_tcp_socket(){
+
+    int cli_sock;
+    struct sockaddr_in server_addr;
+
+    // opening the client socket.
+    cli_sock = socket(AF_INET, SOCK_STREAM,0);
+    if( cli_sock < 0 ) {
+        printf("Socket creation failed, exiting method...\n");
+        sleep(1);
+        clear();
+        return; // maybe use exit(1)
+
+    }else{
+        printf("Socket creation was a success..\n");
+    }
+
+    bzero(&server_addr, sizeof(server_addr)); // reset the buff.
+
+    // enter ip,port
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0"); // local host
+    server_addr.sin_port = htons(5555);
+    
+    // trying to establish connections.
+    int con = connect(cli_sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if (con != 0){
+        printf("Connection with server failed, exiting method...\n");
+        sleep(1);
+        clear();
+        return; // maybe use exit(1)
+    }else{
+        printf("Connection with the server was a success..\n");
+    }
+
+
 }
 
-/**
- * @brief Get the curr directory location.
- * the keyword to activate it - PWD.
- * 
- */
 void get_curr_directory(){
 
     long size;
@@ -81,10 +128,7 @@ void get_curr_directory(){
     printf("%s\n",curr_dir);
 }
 
-/**
- * @brief This method prints an echo message.
- * 
- */
+
 void print_echo_msg(char *return_echo){
 
     /** 
