@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <cstdio>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -83,6 +84,16 @@ void user_input(char *input){
             change_directory(input);
             return;
         }
+        
+        //handle copy case:
+        //this line checks if a string starts with 'COPY'
+        char copy[5];
+        strncpy(copy,&input[0],4);
+        copy[4] = '\0';
+        if(strcmp(copy,"COPY") == 0){
+            copy_from_src_to_dst(input);
+            return;
+        }
 
         // handle echo msg case:
         // this line checks if a string starts with 'ECHO'
@@ -94,6 +105,16 @@ void user_input(char *input){
             return;
         }
 
+        // handle delete file case:
+        // this line checks if a string starts with 'DELETE'
+        char del[7];
+        strncpy(del,&input[0],6);
+        del[6] = '\0';
+        if(strcmp(del,"DELETE") == 0){
+            delete_file(input);
+            return;
+        }
+
         /**
          * @brief in case everything else is not accsesed, we will invoke system calls.
          *  system is a 'library method' which invokes the desired system call given the input.
@@ -101,6 +122,82 @@ void user_input(char *input){
         system(input);
         return;
         
+}
+
+void delete_file(char *delete_input){
+    /** 
+     * i forwad the pointer by 7.
+     * this is because i do not need substring 'DELETE'.
+     */
+    delete_input+=7;
+    unlink(delete_input);
+}
+
+void copy_from_src_to_dst(char *copy_input){
+    /** 
+     * i forwad the pointer by 5.
+     * this is because i do not need substring 'COPY'.
+     */
+    copy_input+=5;
+
+    // extract the src location.
+    char *src, *handle_src;
+    src = (char*)malloc(sizeof(char)*256);
+    handle_src = src;
+    if(src == NULL){
+        printf("Memory allocation failed for src");
+    }
+    while(*copy_input != ' '){
+        *handle_src = *copy_input;
+        handle_src++;
+        copy_input++;
+    }
+    *handle_src = '\0';
+
+    copy_input++; // skip the ' ' 
+
+    // extract the dst location
+    char *dst, *handle_dst;
+    dst = (char*)malloc(sizeof(char)*256);
+    handle_dst = dst;
+    if(dst == NULL){
+        printf("Memory allocation failed for src");
+    }
+    
+    while(*copy_input != '\0'){
+        *handle_dst = *copy_input;
+        handle_dst++;
+        copy_input++;
+    }
+    *handle_dst = '\0';
+    printf("%s\n",src);
+    printf("%s\n",dst);
+    // Copying the file:
+    size_t size;
+    char buf[BUFSIZ];
+    FILE *src_file = fopen(src,"r");
+    if(src_file == NULL){
+        printf("Failed to open src file..\n");
+        return;
+    }
+    FILE *dst_file = fopen(dst,"w");
+    if(dst_file == NULL){
+        printf("Failed to open dest file..\n");
+        return;
+    }
+
+//COPY /home/shaked/Desktop/OS-Course/Shell/Txt /home/shaked/Desktop/OS-Course/Shell/Txt2 
+
+    //reading and writing to the new file.
+    size = fread(buf, 1, BUFSIZ, src_file);
+    while (size > 0) {
+        fwrite(buf, 1, size, dst_file);
+        size = fread(buf, 1, BUFSIZ, src_file);
+    }
+
+    fclose(src_file);
+    fclose(dst_file);
+
 }
 
 void change_directory(char *cd_input){

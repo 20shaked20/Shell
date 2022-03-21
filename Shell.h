@@ -54,6 +54,22 @@ void show_library_files();
  * @brief This method is used to change the current directory.
  * @param chdir() -> this command is a system call.
  */
-void change_directory(char *cd);
+void change_directory(char *cd_input);
+
+/**
+ * @brief This method copies a file in this way : COPY SRC DST
+ * @SRC -> the file source we copy
+ * @DST -> the copied file location
+ * @param fopen() -> part of the C library, it is implmeneted by calling open() which is a system call 
+ * @param fread() -> part of the C library, it is implmeneted by calling read() which is a system call 
+ * @param fwrite() -> part of the C library, it is implmeneted by calling write() which is a system call 
+ */
+void copy_from_src_to_dst(char *copy_input);
+
+/**
+ * @brief This method delets a file : DELETE FILENAME
+ * @param unlink() -> is a system call.
+ */
+void delete_file(char *delete_input);
 
 #endif //SHELL_SHELL_H
