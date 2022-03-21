@@ -44,4 +44,16 @@ void print_echo_msg(char *echo);
  */
 void open_tcp_socket();
 
+/**
+ * @brief This methods shows the current library files.
+ * 
+ */
+void show_library_files();
+
+/**
+ * @brief This method is used to change the current directory.
+ * @param chdir() -> this command is a system call.
+ */
+void change_directory(char *cd);
+
 #endif //SHELL_SHELL_H

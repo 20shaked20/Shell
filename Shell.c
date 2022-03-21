@@ -21,6 +21,8 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
+#include <dirent.h> // for directory files 
+
 
 #include "Shell.h"
 
@@ -41,7 +43,7 @@ void shell_initialize(){
     char* username = getenv("USER");
     printf("\n\n\nUSER:@%s", username);
     printf("\n");
-    sleep(1);
+    sleep(3); // TODO: make a bind to enter, in order to acess shell.
     clear();
 
 }
@@ -50,20 +52,35 @@ void shell_initialize(){
 void user_input(char *input){
 
         // Exit shell case:
-        if(strcmp(input,"EXIT\n") == 0){
+        if(strcmp(input,"EXIT") == 0){
             printf("Exiting shell, good bye ...");
             sleep(1);
             exit(1);
         }
         // get directory case:
-        if(strcmp(input,"pwd\n") == 0){
+        if(strcmp(input,"pwd") == 0){
             get_curr_directory();
             return;
         }
         
         // open a tcp localhost, we are client.
-        if(strcmp(input,"TCP PORT\n") == 0){
+        if(strcmp(input,"TCP PORT") == 0){
             open_tcp_socket();
+            return;
+        }
+
+        if(strcmp(input,"DIR") == 0){
+            show_library_files();
+            return;
+        }
+
+        //handle cd case:
+        //this line checks if a string starts with 'CD'
+        char cd[3];
+        strncpy(cd,&input[0],2);
+        cd[2] = '\0';
+        if(strcmp(cd,"CD") == 0){
+            change_directory(input);
             return;
         }
 
@@ -76,8 +93,52 @@ void user_input(char *input){
             print_echo_msg(input);
             return;
         }
+
+        /**
+         * @brief in case everything else is not accsesed, we will invoke system calls.
+         *  system is a 'library method' which invokes the desired system call given the input.
+         */
+        system(input);
+        return;
         
 }
+
+void change_directory(char *cd_input){
+    /** 
+     * i forwad the pointer by 3.
+     * this is because i do not need substring 'cd'.
+     */
+    cd_input+=3;
+    if(chdir(cd_input) != 0){
+        printf("cd: no such file or directory: %s\n",cd_input);
+    }
+}
+
+
+void show_library_files(){
+
+    DIR *folder_contents;
+    struct dirent *file_name;
+    int idx = 1;
+
+
+    folder_contents = opendir(".");
+    if(folder_contents == NULL){
+        printf("Unable to read from directory");
+        return;
+    }else{
+        while( (file_name = readdir(folder_contents))){
+            
+            printf("%d) %s\n", idx,file_name->d_name);
+            idx++;
+        }
+    }
+
+    closedir(folder_contents);
+    return;
+
+}
+
 void open_tcp_socket(){
 
     int cli_sock;
@@ -88,7 +149,7 @@ void open_tcp_socket(){
     if( cli_sock < 0 ) {
         printf("Socket creation failed, exiting method...\n");
         sleep(1);
-        clear();
+        // clear();
         return; // maybe use exit(1)
 
     }else{
@@ -107,7 +168,7 @@ void open_tcp_socket(){
     if (con != 0){
         printf("Connection with server failed, exiting method...\n");
         sleep(1);
-        clear();
+        // clear();
         return; // maybe use exit(1)
     }else{
         printf("Connection with the server was a success..\n");
@@ -148,6 +209,7 @@ int main(){
         //using fgets so it will include spaces, etc..
         // to put in mind.> dont forget the use of \n when checking for inputs!.
         fgets(inputString,100,stdin);
+        inputString[strcspn(inputString,"\n")] = 0;
         user_input(inputString);
     }
 }
