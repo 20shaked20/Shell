@@ -13,7 +13,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cstdio>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -29,7 +28,11 @@
 
 // method to clear the shell.
 #define clear() printf("\033[H\033[J]")
+#define GREEN "\033[0;32m"
+#define PURPLE "\033[0;35m"
+#define WHITE "\033[0m"
 
+int cli_sock; // global for use when closing or opening the socket.
 
 void shell_initialize(){
     clear();
@@ -54,19 +57,29 @@ void user_input(char *input){
 
         // Exit shell case:
         if(strcmp(input,"EXIT") == 0){
-            printf("Exiting shell, good bye ...");
+            printf("Exiting shell, good bye ...\n");
             sleep(1);
             exit(1);
         }
         // get directory case:
         if(strcmp(input,"pwd") == 0){
             get_curr_directory();
+            printf("\n");
             return;
         }
         
         // open a tcp localhost, we are client.
         if(strcmp(input,"TCP PORT") == 0){
             open_tcp_socket();
+            dup2(1,1234);
+            dup2(cli_sock,1);
+            return;
+        }
+
+        // close the client socket.
+        if(strcmp(input,"LOCAL") == 0){
+            close(cli_sock);
+            dup2(1234,1);
             return;
         }
 
@@ -77,40 +90,28 @@ void user_input(char *input){
 
         //handle cd case:
         //this line checks if a string starts with 'CD'
-        char cd[3];
-        strncpy(cd,&input[0],2);
-        cd[2] = '\0';
-        if(strcmp(cd,"CD") == 0){
+        if(strncmp(input,"CD",2) == 0){
             change_directory(input);
             return;
         }
         
         //handle copy case:
         //this line checks if a string starts with 'COPY'
-        char copy[5];
-        strncpy(copy,&input[0],4);
-        copy[4] = '\0';
-        if(strcmp(copy,"COPY") == 0){
+        if(strncmp(input,"COPY",4) == 0){
             copy_from_src_to_dst(input);
             return;
         }
 
         // handle echo msg case:
         // this line checks if a string starts with 'ECHO'
-        char echo[5];
-        strncpy(echo,&input[0],4);
-        echo[4] = '\0';
-        if(strcmp(echo,"ECHO") == 0){
+        if(strncmp(input,"ECHO",4) == 0){
             print_echo_msg(input);
             return;
         }
 
         // handle delete file case:
         // this line checks if a string starts with 'DELETE'
-        char del[7];
-        strncpy(del,&input[0],6);
-        del[6] = '\0';
-        if(strcmp(del,"DELETE") == 0){
+        if(strncmp(input,"DELETE",6) == 0){
             delete_file(input);
             return;
         }
@@ -225,10 +226,10 @@ void show_library_files(){
         return;
     }else{
         while( (file_name = readdir(folder_contents))){
-            
-            printf("%d) %s\n", idx,file_name->d_name);
+            printf("%s ",file_name->d_name);
             idx++;
         }
+        printf("\n");
     }
 
     closedir(folder_contents);
@@ -238,7 +239,6 @@ void show_library_files(){
 
 void open_tcp_socket(){
 
-    int cli_sock;
     struct sockaddr_in server_addr;
 
     // opening the client socket.
@@ -270,8 +270,6 @@ void open_tcp_socket(){
     }else{
         printf("Connection with the server was a success..\n");
     }
-
-
 }
 
 void get_curr_directory(){
@@ -283,7 +281,7 @@ void get_curr_directory(){
     if((buf = (char*)malloc((size_t)size))!=NULL){
         curr_dir = getcwd(buf,(size_t)size);
     }
-    printf("%s\n",curr_dir);
+    printf("%s",curr_dir);
 }
 
 
@@ -303,8 +301,19 @@ int main(){
     shell_initialize();
     
     while(1){
+
+        printf(GREEN); // change color to green
+        printf("%s",getenv("USER")); // username.
+        printf("@ubuntu"); // os 
+        printf(WHITE); // changes to the basic color.
+        printf(":");
+        printf(PURPLE); // change color to purple
+        printf("~");
+        get_curr_directory(); //directory
+        printf("$ ");
+
+        printf(WHITE); // changes to the basic color.
         //using fgets so it will include spaces, etc..
-        // to put in mind.> dont forget the use of \n when checking for inputs!.
         fgets(inputString,100,stdin);
         inputString[strcspn(inputString,"\n")] = 0;
         user_input(inputString);
