@@ -23,16 +23,24 @@
 
 #include <dirent.h> // for directory files 
 
-
 #include "Shell.h"
 
-// method to clear the shell.
+/* method to clear the shell. */
 #define clear() printf("\033[H\033[J]")
+
+/* Colors */
 #define GREEN "\033[0;32m"
 #define PURPLE "\033[0;35m"
 #define WHITE "\033[0m"
 
-int cli_sock; // global for use when closing or opening the socket.
+/* Globals */
+#define TRUE 1
+#define FALSE 0
+#define MAXSIZE 256
+#define PORT 5555
+#define LOCALHOST "0.0.0.0"
+int cli_sock;
+int tcp_connections = 0; // i use this to not let the user enter LOCAL only after the client opened a tcp connection
 
 void shell_initialize(){
     clear();
@@ -70,16 +78,28 @@ void user_input(char *input){
         
         // open a tcp localhost, we are client.
         if(strcmp(input,"TCP PORT") == 0){
+
+            /* Try to auto start server failure */
+            // const char *run_server = "gnome-terminal --command=\"./Server\" ";
+            // system(run_server);
+            // sleep(1);
+
             open_tcp_socket();
             dup2(1,1234);
             dup2(cli_sock,1);
+            tcp_connections++;
             return;
         }
 
         // close the client socket.
-        if(strcmp(input,"LOCAL") == 0){
+        if(strcmp(input,"LOCAL") == 0 && tcp_connections>0 ){
+
+            /*Tells the server to close connection*/
+            printf("Exit");
+
             close(cli_sock);
             dup2(1234,1);
+            tcp_connections = 0; 
             return;
         }
 
@@ -246,8 +266,7 @@ void open_tcp_socket(){
     if( cli_sock < 0 ) {
         printf("Socket creation failed, exiting method...\n");
         sleep(1);
-        // clear();
-        return; // maybe use exit(1)
+        return;
 
     }else{
         printf("Socket creation was a success..\n");
@@ -257,16 +276,15 @@ void open_tcp_socket(){
 
     // enter ip,port
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0"); // local host
-    server_addr.sin_port = htons(5555);
+    server_addr.sin_addr.s_addr = inet_addr(LOCALHOST); // local host
+    server_addr.sin_port = htons(PORT);
     
     // trying to establish connections.
     int con = connect(cli_sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
     if (con != 0){
         printf("Connection with server failed, exiting method...\n");
         sleep(1);
-        // clear();
-        return; // maybe use exit(1)
+        return;
     }else{
         printf("Connection with the server was a success..\n");
     }
@@ -297,10 +315,10 @@ void print_echo_msg(char *return_echo){
 
 int main(){
     char *inputString ;
-    inputString = (char*) malloc(100*sizeof(char));
+    inputString = (char*) malloc(MAXSIZE*sizeof(char));
     shell_initialize();
     
-    while(1){
+    while(TRUE){
 
         printf(GREEN); // change color to green
         printf("%s",getenv("USER")); // username.
@@ -313,8 +331,8 @@ int main(){
         printf("$ ");
 
         printf(WHITE); // changes to the basic color.
-        //using fgets so it will include spaces, etc..
-        fgets(inputString,100,stdin);
+        /*using fgets so it will include spaces, etc..*/
+        fgets(inputString,MAXSIZE,stdin);
         inputString[strcspn(inputString,"\n")] = 0;
         user_input(inputString);
     }
