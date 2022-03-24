@@ -216,6 +216,11 @@ void copy_from_src_to_dst(char *copy_input){
         size = fread(buf, 1, BUFSIZ, src_file);
     }
 
+    free(src);
+    free(handle_src);
+    free(dst);
+    free(handle_dst);
+
     fclose(src_file);
     fclose(dst_file);
 
@@ -252,9 +257,9 @@ void show_library_files(){
         printf("\n");
     }
 
+    free(folder_contents);
+    free(file_name);
     closedir(folder_contents);
-    return;
-
 }
 
 void open_tcp_socket(){
@@ -300,6 +305,10 @@ void get_curr_directory(){
         curr_dir = getcwd(buf,(size_t)size);
     }
     printf("%s",curr_dir);
+
+    /*FREE*/
+    free(buf);
+    free(curr_dir);
 }
 
 
@@ -332,8 +341,10 @@ int main(){
 
         printf(WHITE); // changes to the basic color.
         /*using fgets so it will include spaces, etc..*/
+        // bzero(inputString);
         fgets(inputString,MAXSIZE,stdin);
         inputString[strcspn(inputString,"\n")] = 0;
         user_input(inputString);
     }
+    free(inputString);
 }
