@@ -95,7 +95,7 @@ void user_input(char *input){
         if(strcmp(input,"LOCAL") == 0 && tcp_connections>0 ){
 
             /*Tells the server to close connection*/
-            printf("Exit");
+            // printf("Exit");
 
             close(cli_sock);
             dup2(1234,1);
@@ -294,7 +294,7 @@ void get_curr_directory(){
 
     long size;
     char *buf;
-    char *curr_dir;
+    char *curr_dir = NULL;
     size = pathconf(".",_PC_PATH_MAX);
     if((buf = (char*)malloc((size_t)size))!=NULL){
         curr_dir = getcwd(buf,(size_t)size);

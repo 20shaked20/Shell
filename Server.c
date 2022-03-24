@@ -26,7 +26,7 @@ void Display(int connect){
         printf("%s\n",buff);
 
         /* in case we got Exit, return to main menu and stop recieving from the server, return to normal */
-        if (strncmp("Exit", buff, 4) == 0) {
+        if (strncmp("LOCAL", buff, 5) == 0) {
             close(serv_sock);
             exit(1);
         } 
