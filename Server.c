@@ -26,12 +26,11 @@ void Display(int connect){
         printf("%s\n",buff);
 
         /* in case we got Exit, return to main menu and stop recieving from the server, return to normal */
-        if (strncmp("LOCAL", buff, 5) == 0) {
-            close(serv_sock);
-            exit(1);
+        if (strncmp("Exit", buff, 4) == 0) {
+            printf("returning to normal mode... \n");
+            return;
         } 
     }
-
 }
 
 int main(){
@@ -68,7 +67,7 @@ int main(){
     }
 
     /* listen */
-    int listener = listen(serv_sock,1);
+    int listener = listen(serv_sock,5);
     if(listener != 0){
         printf("Listen to clients failed..\n");
         exit(1);
@@ -76,18 +75,19 @@ int main(){
     else{
         printf("Server is waiting for clients...\n");
     }
-
-    /* connection */
-    unsigned int len = sizeof(cli_addr);
-    connect = accept(serv_sock, (struct sockaddr*)&cli_addr, &len);
-    if(connect < 0){
-        printf("Server failed to accept client...\n");
-        exit(1);
-    }else{
-        printf("Server accpeted the client...\n");
+    
+    /* We do this in order to enable endless connections and reconnections to the server*/
+    while(TRUE){
+        /* connection */
+        unsigned int len = sizeof(cli_addr);
+        connect = accept(serv_sock, (struct sockaddr*)&cli_addr, &len);
+        if(connect < 0){
+            printf("Server failed to accept client...\n");
+            exit(1);
+        }else{
+            printf("Server accpeted the client...\n");
+            Display(connect);
+        }
     }
-
-    Display(connect);
-    close(serv_sock);
-    exit(1);
+    
 }

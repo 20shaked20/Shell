@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -66,6 +67,7 @@ void user_input(char *input){
         // Exit shell case:
         if(strcmp(input,"EXIT") == 0){
             printf("Exiting shell, good bye ...\n");
+            free(input);
             sleep(1);
             exit(1);
         }
@@ -79,7 +81,7 @@ void user_input(char *input){
         // open a tcp localhost, we are client.
         if(strcmp(input,"TCP PORT") == 0){
 
-            /* Try to auto start server failure */
+            /* Try to auto start server failure :( */
             // const char *run_server = "gnome-terminal --command=\"./Server\" ";
             // system(run_server);
             // sleep(1);
@@ -93,9 +95,9 @@ void user_input(char *input){
 
         // close the client socket.
         if(strcmp(input,"LOCAL") == 0 && tcp_connections>0 ){
-
             /*Tells the server to close connection*/
-            // printf("Exit");
+            printf("Exit\n");
+            sleep(1);
 
             close(cli_sock);
             dup2(1234,1);
@@ -126,6 +128,7 @@ void user_input(char *input){
         // this line checks if a string starts with 'ECHO'
         if(strncmp(input,"ECHO",4) == 0){
             print_echo_msg(input);
+            printf("\n");
             return;
         }
 
@@ -140,9 +143,43 @@ void user_input(char *input){
          * @brief in case everything else is not accsesed, we will invoke system calls.
          *  system is a 'library method' which invokes the desired system call given the input.
          */
-        system(input);
+        // system(input);
+
+        manual_system_calls(input);
         return;
         
+}
+char *split_input[MAXSIZE];
+void manual_system_calls(char *input){
+
+    split(input);
+
+    /* forks a new child */
+    int process_id = fork();
+
+    if(process_id < 0) {
+        /* error case */
+        return; 
+    }else if (process_id == 0){
+        /* child process */
+        execvp(split_input[0], split_input);
+    }else{
+        /* Parent Process */
+        wait(NULL);
+    }
+    return;
+}
+
+void split(char *input){
+    char* tmp_input;
+    unsigned int i = 0;
+    tmp_input = strtok(input," ");
+    while(tmp_input != NULL){
+        split_input[i] = tmp_input;
+        ++i;
+        tmp_input = strtok(NULL," ");
+    }
+    return;
 }
 
 void delete_file(char *delete_input){
@@ -257,7 +294,6 @@ void show_library_files(){
         printf("\n");
     }
 
-    free(folder_contents);
     free(file_name);
     closedir(folder_contents);
 }
@@ -308,9 +344,7 @@ void get_curr_directory(){
 
     /*FREE*/
     free(buf);
-    free(curr_dir);
 }
-
 
 void print_echo_msg(char *return_echo){
 
@@ -326,12 +360,15 @@ int main(){
     char *inputString ;
     inputString = (char*) malloc(MAXSIZE*sizeof(char));
     shell_initialize();
-    
+     
+    struct utsname os_type;
+    uname(&os_type); // name finds.
+
     while(TRUE){
 
         printf(GREEN); // change color to green
         printf("%s",getenv("USER")); // username.
-        printf("@ubuntu"); // os 
+        printf("@%s",os_type.nodename); // os 
         printf(WHITE); // changes to the basic color.
         printf(":");
         printf(PURPLE); // change color to purple

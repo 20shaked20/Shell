@@ -72,4 +72,6 @@ void copy_from_src_to_dst(char *copy_input);
  */
 void delete_file(char *delete_input);
 
+void split(char *input);
+void manual_system_calls(char *input);
 #endif //SHELL_SHELL_H

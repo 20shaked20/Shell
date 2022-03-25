@@ -1,4 +1,4 @@
-CC = clang++-9
+CC = gcc
 AR = ar
 FLAGS = -Wall -g
 
