@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <sys/utsname.h>
 #include <sys/types.h>
@@ -280,7 +281,7 @@ void show_library_files(){
     DIR *folder_contents;
     struct dirent *file_name;
     int idx = 1;
-
+    struct stat is_runnable;
 
     folder_contents = opendir(".");
     if(folder_contents == NULL){
@@ -288,10 +289,26 @@ void show_library_files(){
         return;
     }else{
         while( (file_name = readdir(folder_contents))){
-            printf("%s ",file_name->d_name);
+            if (stat(file_name->d_name, &is_runnable) == 0 && is_runnable.st_mode & S_IXUSR){ 
+                if(strncmp(file_name->d_name,".",1) == 0){
+                    /*Starts with '.' , so color is pruple */
+                    printf(PURPLE);
+                    printf("%s\n",file_name->d_name);
+                }else{
+                    /* executable file so we change its color to green */
+                    printf(GREEN); // change color to green
+                    printf("%s\n",file_name->d_name);
+                }
+                printf(WHITE);
+            }
+            else {
+                /* non-executable, stays the same (white) */
+                printf("%s\n",file_name->d_name);
+            }
+                
+            
             idx++;
         }
-        printf("\n");
     }
 
     free(file_name);
